@@ -1,0 +1,42 @@
+name: 'q-learning'
+
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server
+    container_name: ${COMPOSE_PROJECT_NAME}-database
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+    ports:
+      - "1433:1433"
+    networks:
+      - network
+    volumes:
+      - database-volume:/var/opt/mssql
+  python:
+    build:
+      context: .
+      dockerfile: ./docker/python/Dockerfile
+    image: ${COMPOSE_PROJECT_NAME}-python
+    container_name: ${COMPOSE_PROJECT_NAME}-python
+    volumes:
+      - type: bind
+        source: ./project
+        target: /app
+    environment:
+      PYTHONUNBUFFERED: 1
+      PYTHONPATH: /app
+      SECRET: ${SECRET:-0}
+    networks:
+      - network
+    depends_on:
+      - database
+
+volumes:
+  database-volume:
+    driver: local
+
+networks:
+  network:
+    name : ${COMPOSE_PROJECT_NAME}-network
+    driver: bridge
